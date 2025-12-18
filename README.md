@@ -125,6 +125,295 @@ For complete documentation and component APIs, visit:
 - [Component Examples](https://gluestack.io/ui/docs/home/components)
 - [GitHub Repository](https://github.com/gluestack/gluestack-ui)
 
+## API Client Architecture
+
+This project includes a production-ready API client layer built with **Axios** and **TanStack Query (React Query)**. The API client provides type-safe data fetching, caching, error handling, and authentication integration.
+
+### Overview
+
+The API client is organized into several key components:
+
+```
+/api
+  ├── client.ts              # Axios instance with interceptors
+  ├── queryClient.ts         # TanStack Query configuration
+  ├── endpoints.ts           # API endpoint constants
+  ├── types.ts               # TypeScript interfaces
+  ├── errors.ts              # Error handling utilities
+  ├── queryKeys.ts           # Query keys factory
+  └── hooks/
+      ├── useAuth.ts         # Authentication hooks
+      ├── useUser.ts         # User management hooks
+      └── useItems.ts        # Example resource hooks
+```
+
+### Setup
+
+1. **Environment Configuration**
+
+   Create a `.env` file in the root directory (see `.env.example`):
+
+   ```env
+   EXPO_PUBLIC_API_BASE_URL=http://localhost:3000/api
+   ```
+
+   Or configure it in `app.json`:
+
+   ```json
+   {
+     "expo": {
+       "extra": {
+         "apiBaseUrl": "https://api.example.com/api"
+       }
+     }
+   }
+   ```
+
+2. **QueryClientProvider**
+
+   The app is already wrapped with `QueryClientProvider` in `App.tsx`, which enables TanStack Query throughout the application.
+
+### Usage Examples
+
+#### Authentication Hooks
+
+```tsx
+import { useLogin, useLogout } from '@/api/hooks';
+
+function LoginScreen() {
+  const { mutate: login, isPending, error } = useLogin();
+  
+  const handleLogin = () => {
+    login(
+      { email: 'user@example.com', password: 'password' },
+      {
+        onSuccess: () => {
+          // Navigation happens automatically via AuthContext
+        },
+        onError: (error) => {
+          console.error('Login failed:', error);
+        },
+      }
+    );
+  };
+  
+  return <Button onPress={handleLogin}>Login</Button>;
+}
+```
+
+#### Query Hooks (GET requests)
+
+```tsx
+import { useGetItems } from '@/api/hooks';
+
+function ItemsScreen() {
+  const { data, isLoading, error, refetch } = useGetItems({ page: 1, limit: 10 });
+  
+  if (isLoading) return <Loading />;
+  if (error) return <Error message={error.message} />;
+  
+  return (
+    <FlatList
+      data={data?.data}
+      renderItem={({ item }) => <ItemCard item={item} />}
+      refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} />}
+    />
+  );
+}
+```
+
+#### Mutation Hooks (POST, PUT, DELETE)
+
+```tsx
+import { useCreateItem, useUpdateItem, useDeleteItem } from '@/api/hooks';
+
+function CreateItemForm() {
+  const { mutate: createItem, isPending } = useCreateItem();
+  
+  const handleCreate = () => {
+    createItem(
+      { title: 'New Item', description: 'Item description' },
+      {
+        onSuccess: () => {
+          Alert.alert('Success', 'Item created!');
+        },
+        onError: (error) => {
+          Alert.alert('Error', error.message);
+        },
+      }
+    );
+  };
+  
+  return <Button onPress={handleCreate}>Create</Button>;
+}
+```
+
+### Creating New API Hooks
+
+1. **Define Types** (`api/types.ts`)
+
+   ```typescript
+   export interface MyResource {
+     id: string;
+     name: string;
+   }
+   
+   export interface CreateMyResourceRequest {
+     name: string;
+   }
+   ```
+
+2. **Add Endpoints** (`api/endpoints.ts`)
+
+   ```typescript
+   export const apiEndpoints = {
+     myResources: {
+       list: () => '/my-resources',
+       byId: (id: string) => `/my-resources/${id}`,
+       create: () => '/my-resources',
+       update: (id: string) => `/my-resources/${id}`,
+       delete: (id: string) => `/my-resources/${id}`,
+     },
+   };
+   ```
+
+3. **Add Query Keys** (`api/queryKeys.ts`)
+
+   ```typescript
+   export const queryKeys = {
+     myResources: {
+       all: ['myResources'] as const,
+       lists: () => [...queryKeys.myResources.all, 'list'] as const,
+       list: (filters?: Record<string, unknown>) =>
+         [...queryKeys.myResources.lists(), filters] as const,
+       details: () => [...queryKeys.myResources.all, 'detail'] as const,
+       detail: (id: string) => [...queryKeys.myResources.details(), id] as const,
+     },
+   };
+   ```
+
+4. **Create Hooks** (`api/hooks/useMyResources.ts`)
+
+   ```typescript
+   import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+   import { apiClient } from '../client';
+   import { queryKeys } from '../queryKeys';
+   import { apiEndpoints } from '../endpoints';
+   import type { MyResource, CreateMyResourceRequest } from '../types';
+   
+   export function useGetMyResources() {
+     return useQuery({
+       queryKey: queryKeys.myResources.list(),
+       queryFn: async () => {
+         const response = await apiClient.get(apiEndpoints.myResources.list());
+         return response.data;
+       },
+     });
+   }
+   
+   export function useCreateMyResource() {
+     const queryClient = useQueryClient();
+     
+     return useMutation({
+       mutationFn: async (data: CreateMyResourceRequest) => {
+         const response = await apiClient.post(
+           apiEndpoints.myResources.create(),
+           data
+         );
+         return response.data;
+       },
+       onSuccess: () => {
+         // Invalidate list to refetch
+         queryClient.invalidateQueries({ 
+           queryKey: queryKeys.myResources.lists() 
+         });
+       },
+     });
+   }
+   ```
+
+### Features
+
+#### Authentication Integration
+
+- Automatic token attachment to requests via request interceptor
+- Token refresh on 401 errors
+- Automatic logout and cache clearing on authentication failure
+- Integration with `AuthContext` for state management
+
+#### Error Handling
+
+- Custom error classes for different HTTP status codes
+- User-friendly error messages
+- Network and timeout error handling
+- Centralized error formatting
+
+#### Caching Strategy
+
+- Automatic caching with configurable stale times
+- Cache invalidation after mutations
+- Optimistic updates for better UX
+- Query key factory for consistent cache management
+
+#### Type Safety
+
+- Full TypeScript support throughout
+- Typed request/response interfaces
+- Type-safe query keys and endpoints
+- Generic hooks for reusability
+
+### Configuration
+
+API configuration can be adjusted in `constants/api.ts`:
+
+```typescript
+export const API_CONFIG = {
+  timeout: 10000,        // Request timeout in ms
+  maxRetries: 3,         // Maximum retry attempts
+  retryDelay: 1000,      // Base retry delay in ms
+  enableLogging: __DEV__, // Enable request/response logging
+};
+```
+
+Query client defaults can be configured in `api/queryClient.ts`:
+
+```typescript
+defaultOptions: {
+  queries: {
+    staleTime: 5 * 60 * 1000,  // 5 minutes
+    gcTime: 10 * 60 * 1000,    // 10 minutes
+    retry: 3,
+  },
+}
+```
+
+### Example Screen
+
+A complete example screen demonstrating all API hook patterns is available at `screens/main/ApiDemoScreen.tsx`. This screen shows:
+
+- Query hooks with loading and error states
+- Mutation hooks for create, update, and delete
+- Optimistic updates
+- Cache invalidation
+- Pull-to-refresh functionality
+
+### Best Practices
+
+1. **Use Query Keys Factory**: Always use the query keys factory pattern for consistent cache management
+2. **Invalidate After Mutations**: Always invalidate related queries after mutations
+3. **Handle Loading States**: Always handle loading and error states in your components
+4. **Type Everything**: Define TypeScript interfaces for all API requests and responses
+5. **Error Handling**: Use the provided error formatting utilities for user-friendly messages
+6. **Optimistic Updates**: Use optimistic updates for better UX when appropriate
+
+### Documentation
+
+For more information, refer to:
+
+- [TanStack Query Documentation](https://tanstack.com/query/latest)
+- [Axios Documentation](https://axios-http.com/docs/intro)
+- [TypeScript Handbook](https://www.typescriptlang.org/docs/)
+
 ## Join the community
 
 Join our community of developers creating universal apps.
