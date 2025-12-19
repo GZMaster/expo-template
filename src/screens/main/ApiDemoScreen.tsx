@@ -7,6 +7,18 @@
  */
 
 import {
+  EmptyList,
+  ErrorFallback,
+  LoadingSpinner,
+  RefreshableFlatList,
+  useToast,
+} from '@/components/feedback';
+import { useAppNavigation } from '@/navigation';
+import type { AppTabScreenProps } from '@/navigation/types';
+import { formatErrorMessage } from '@/services/errors';
+import { useCreateItem, useDeleteItem, useGetItems, useUpdateItem } from '@/services/hooks';
+import type { Item } from '@/services/types';
+import {
   Box,
   Button,
   ButtonText,
@@ -15,17 +27,11 @@ import {
   HStack,
   Input,
   InputField,
-  Spinner,
   Text,
   VStack,
 } from '@gluestack-ui/themed';
 import { useState } from 'react';
-import { Alert, FlatList, RefreshControl } from 'react-native';
-import { useAppNavigation } from '@/navigation';
-import type { AppTabScreenProps } from '@/navigation/types';
-import { formatErrorMessage } from '@/services/errors';
-import { useCreateItem, useDeleteItem, useGetItems, useUpdateItem } from '@/services/hooks';
-import type { Item } from '@/services/types';
+import { Alert } from 'react-native';
 
 type Props = AppTabScreenProps<'Home'>;
 
@@ -34,6 +40,7 @@ type Props = AppTabScreenProps<'Home'>;
  * Displays a single item with edit and delete actions
  */
 function ItemCard({ item }: { item: Item }) {
+  const toast = useToast();
   const { mutate: deleteItem, isPending: isDeleting } = useDeleteItem();
   const { mutate: updateItem, isPending: isUpdating } = useUpdateItem();
   const [isEditing, setIsEditing] = useState(false);
@@ -49,10 +56,10 @@ function ItemCard({ item }: { item: Item }) {
         onPress: () => {
           deleteItem(item.id, {
             onSuccess: () => {
-              Alert.alert('Success', 'Item deleted successfully');
+              toast.success('Item deleted successfully');
             },
             onError: (error) => {
-              Alert.alert('Error', formatErrorMessage(error));
+              toast.error(formatErrorMessage(error));
             },
           });
         },
@@ -69,10 +76,10 @@ function ItemCard({ item }: { item: Item }) {
       {
         onSuccess: () => {
           setIsEditing(false);
-          Alert.alert('Success', 'Item updated successfully');
+          toast.success('Item updated successfully');
         },
         onError: (error) => {
-          Alert.alert('Error', formatErrorMessage(error));
+          toast.error(formatErrorMessage(error));
         },
       },
     );
@@ -153,13 +160,14 @@ function ItemCard({ item }: { item: Item }) {
  * Create Item Form Component
  */
 function CreateItemForm() {
+  const toast = useToast();
   const { mutate: createItem, isPending } = useCreateItem();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
 
   function handleCreate() {
     if (!title.trim()) {
-      Alert.alert('Error', 'Title is required');
+      toast.warning('Title is required');
       return;
     }
 
@@ -169,10 +177,10 @@ function CreateItemForm() {
         onSuccess: () => {
           setTitle('');
           setDescription('');
-          Alert.alert('Success', 'Item created successfully');
+          toast.success('Item created successfully');
         },
         onError: (error) => {
-          Alert.alert('Error', formatErrorMessage(error));
+          toast.error(formatErrorMessage(error));
         },
       },
     );
@@ -218,61 +226,31 @@ export function ApiDemoScreen(_props: Props) {
   } = useGetItems({ page: 1, limit: 20 });
 
   if (isLoading) {
-    return (
-      <Box
-        flex={1}
-        style={{ justifyContent: 'center', alignItems: 'center', backgroundColor: 'background' }}
-      >
-        <VStack style={{ gap: 8, alignItems: 'center' }}>
-          <Spinner size='large' />
-          <Text>Loading items...</Text>
-        </VStack>
-      </Box>
-    );
+    return <LoadingSpinner message='Loading items...' />;
   }
 
   if (isError) {
-    return (
-      <Box flex={1} style={{ padding: 16, backgroundColor: 'background' }} justifyContent='center'>
-        <Card style={{ padding: 16, backgroundColor: 'error-50', borderRadius: 16 }}>
-          <VStack style={{ gap: 8, alignItems: 'center' }}>
-            <Heading style={{ fontSize: 24, color: 'error-600' }}>Error Loading Items</Heading>
-            <Text style={{ color: 'error-600', textAlign: 'center' }}>
-              {formatErrorMessage(error)}
-            </Text>
-            <Button onPress={() => refetch()}>
-              <ButtonText>Retry</ButtonText>
-            </Button>
-            <Button
-              style={{ borderWidth: 1, borderColor: 'gray' }}
-              onPress={() => navigation.goBack()}
-            >
-              <ButtonText>Go Back</ButtonText>
-            </Button>
-          </VStack>
-        </Card>
-      </Box>
-    );
+    return <ErrorFallback error={error as Error} onReset={() => refetch()} />;
   }
 
   const items = itemsData?.data || [];
 
   return (
     <Box flex={1} style={{ backgroundColor: 'background' }}>
-      <FlatList
+      <RefreshableFlatList
         data={items}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => <ItemCard item={item} />}
         ListHeaderComponent={<CreateItemForm />}
         ListEmptyComponent={
-          <Card style={{ padding: 16, backgroundColor: 'background-light-0', borderRadius: 16 }}>
-            <Text textAlign='center' color='$textLight500'>
-              No items found. Create your first item above!
-            </Text>
-          </Card>
+          <EmptyList
+            title='No items yet'
+            description='Create your first item using the form above'
+          />
         }
         contentContainerStyle={{ padding: 16 }}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={() => refetch()} />}
+        onRefresh={refetch}
+        refreshing={isRefetching}
       />
     </Box>
   );

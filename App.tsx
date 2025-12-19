@@ -5,6 +5,12 @@
  * Wraps the app with necessary providers and navigation.
  */
 
+import { ErrorBoundary, ToastProvider } from '@/components/feedback';
+import { AuthProvider } from '@/contexts/AuthContext';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { RootNavigator } from '@/navigation';
+import { linking } from '@/navigation/linking';
+import { queryClient } from '@/services/queryClient';
 import { createConfig, GluestackUIProvider } from '@gluestack-ui/themed';
 import {
   DarkTheme,
@@ -14,11 +20,6 @@ import {
 } from '@react-navigation/native';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-import { RootNavigator } from '@/navigation';
-import { linking } from '@/navigation/linking';
-import { queryClient } from '@/services/queryClient';
 import 'react-native-reanimated';
 
 export default function App() {
@@ -36,17 +37,21 @@ export default function App() {
     },
   });
   return (
-    <GluestackUIProvider colorMode={colorScheme === 'dark' ? 'dark' : 'light'} config={config}>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <NavigationContainer linking={linking}>
-              <RootNavigator />
-              <StatusBar style='auto' />
-            </NavigationContainer>
-          </AuthProvider>
-        </QueryClientProvider>
-      </ThemeProvider>
-    </GluestackUIProvider>
+    <ErrorBoundary>
+      <GluestackUIProvider colorMode={colorScheme === 'dark' ? 'dark' : 'light'} config={config}>
+        <ToastProvider>
+          <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+            <QueryClientProvider client={queryClient}>
+              <AuthProvider>
+                <NavigationContainer linking={linking}>
+                  <RootNavigator />
+                  <StatusBar style='auto' />
+                </NavigationContainer>
+              </AuthProvider>
+            </QueryClientProvider>
+          </ThemeProvider>
+        </ToastProvider>
+      </GluestackUIProvider>
+    </ErrorBoundary>
   );
 }
