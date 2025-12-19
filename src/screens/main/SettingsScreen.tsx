@@ -13,13 +13,13 @@ import type { AppTabScreenProps } from '@/navigation/types';
 type Props = AppTabScreenProps<'Settings'>;
 
 export function SettingsScreen(_props: Props) {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const colorScheme = useColorScheme();
 
-  async function handleLogout() {
-    await logout();
-    // Navigation will happen automatically via RootNavigator when isAuthenticated changes
-  }
+  // async function handleLogout() {
+  //   await logout();
+  //   // Navigation will happen automatically via RootNavigator when isAuthenticated changes
+  // }
 
   return (
     <ScrollView>

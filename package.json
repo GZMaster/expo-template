@@ -71,8 +71,7 @@
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [
-      "biome check --write --no-errors-on-unmatched",
-      "eslint --fix"
+      "biome check --write --no-errors-on-unmatched"
     ]
   },
   "private": true

@@ -38,7 +38,7 @@ export function SearchScreen(_props: Props) {
           {searchQuery ? (
             <Box style={{ padding: 16, backgroundColor: 'background-light-0', borderRadius: 16 }}>
               <Text style={{ fontSize: 16, color: 'text-light-500' }}>
-                Search results for "{searchQuery}" will appear here.
+                Search results for will appear here.
               </Text>
             </Box>
           ) : (
