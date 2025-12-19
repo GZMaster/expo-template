@@ -134,7 +134,7 @@ This project includes a production-ready API client layer built with **Axios** a
 The API client is organized into several key components:
 
 ```
-/api
+/src/services
   ├── client.ts              # Axios instance with interceptors
   ├── queryClient.ts         # TanStack Query configuration
   ├── endpoints.ts           # API endpoint constants
@@ -178,7 +178,7 @@ The API client is organized into several key components:
 #### Authentication Hooks
 
 ```tsx
-import { useLogin, useLogout } from '@/api/hooks';
+import { useLogin, useLogout } from '@services/hooks';
 
 function LoginScreen() {
   const { mutate: login, isPending, error } = useLogin();

@@ -1,12 +1,13 @@
 {
-  "$schema": "https://biomejs.dev/schemas/1.9.0/schema.json",
-  "organizeImports": {
-    "enabled": true
-  },
+  "$schema": "https://biomejs.dev/schemas/2.3.10/schema.json",
+  "assist": { "actions": { "source": { "organizeImports": "on" } } },
   "linter": {
     "enabled": true,
     "rules": {
-      "recommended": true
+      "recommended": true,
+      "suspicious": {
+        "noExplicitAny": "off"
+      }
     }
   },
   "formatter": {
@@ -16,7 +17,7 @@
     "indentWidth": 2,
     "lineWidth": 100,
     "lineEnding": "lf",
-    "ignore": []
+    "includes": ["**"]
   },
   "javascript": {
     "formatter": {
@@ -29,7 +30,7 @@
   },
   "overrides": [
     {
-      "include": ["*.config.js", "metro.config.js"],
+      "includes": ["**/*.config.js", "**/metro.config.js"],
       "formatter": {
         "enabled": false
       },
@@ -39,23 +40,25 @@
     }
   ],
   "files": {
-    "include": ["**/*.ts", "**/*.tsx", "**/*.js", "**/*.jsx"],
-    "ignore": [
-      "node_modules",
-      ".expo",
-      ".expo-shared",
-      "build",
-      "dist",
-      "coverage",
-      "ios",
-      "android",
-      "*.config.js",
-      "metro.config.js",
-      ".git",
-      ".next",
-      ".turbo"
+    "includes": [
+      "**/*.ts",
+      "**/*.tsx",
+      "**/*.js",
+      "**/*.jsx",
+      "!**/node_modules",
+      "!**/.expo",
+      "!**/.expo-shared",
+      "!**/build",
+      "!**/dist",
+      "!**/coverage",
+      "!**/ios",
+      "!**/android",
+      "!**/*.config.js",
+      "!**/metro.config.js",
+      "!**/.git",
+      "!**/.next",
+      "!**/.turbo",
+      "!**/biome.json"
     ]
   }
 }
-
-
