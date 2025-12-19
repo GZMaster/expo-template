@@ -414,6 +414,169 @@ For more information, refer to:
 - [Axios Documentation](https://axios-http.com/docs/intro)
 - [TypeScript Handbook](https://www.typescriptlang.org/docs/)
 
+## Code Quality and Formatting
+
+This project uses **Biome** for formatting and **ESLint** for code quality checks. Both tools are configured to work together seamlessly.
+
+### Tools
+
+- **Biome**: Fast formatter and linter that handles code formatting and import organization
+- **ESLint**: Code quality linter with TypeScript, React, and React Native specific rules
+
+### Available Scripts
+
+Run these commands from the project root:
+
+```bash
+# Format code with Biome
+npm run format
+
+# Check formatting without modifying files
+npm run format:check
+
+# Lint code with ESLint
+npm run lint
+
+# Auto-fix ESLint issues
+npm run lint:fix
+
+# Run both Biome check and ESLint
+npm run check
+
+# Run both with auto-fix
+npm run check:fix
+```
+
+### Editor Setup (VSCode)
+
+The project includes VSCode settings for automatic formatting and linting:
+
+1. **Install recommended extensions** (VSCode will prompt you):
+   - `biomejs.biome` - Biome formatter and linter
+   - `dbaeumer.vscode-eslint` - ESLint integration
+
+2. **Automatic formatting** is enabled:
+   - Format on save is enabled
+   - Biome is set as the default formatter for TypeScript/JavaScript files
+   - ESLint auto-fix runs on save
+   - Imports are automatically organized on save
+
+3. **Manual formatting**: Use `Shift + Alt + F` (Windows/Linux) or `Shift + Option + F` (Mac) to format the current file
+
+### Configuration
+
+#### Biome Configuration (`biome.json`)
+
+- **Formatter settings**:
+  - Line width: 100 characters
+  - Indent width: 2 spaces
+  - Single quotes for strings
+  - Semicolons: required
+  - Trailing commas: all
+
+- **Linter**: Recommended rules enabled with React and TypeScript support
+- **Organize imports**: Automatically enabled
+
+#### ESLint Configuration (`eslint.config.js`)
+
+- **TypeScript**: Full TypeScript support with type-aware linting
+- **React**: React and React Hooks rules enabled
+- **React Native**: React Native specific rules and best practices
+- **Rules**:
+  - React Hooks exhaustive-deps and rules-of-hooks enforced
+  - TypeScript `no-explicit-any` as warning
+  - Console statements allowed in development
+  - Formatting rules disabled (handled by Biome)
+
+### Git Hooks
+
+The project uses **Husky** and **lint-staged** to automatically format and lint code before commits:
+
+- **Pre-commit hook**: Runs Biome formatter and ESLint on staged files
+- **Automatic setup**: Husky is initialized when you run `npm install`
+
+If linting fails, the commit will be blocked. Fix the issues and try committing again.
+
+### Disabling Rules
+
+#### Disable a rule for a specific line
+
+**ESLint:**
+```typescript
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const data: any = fetchData();
+```
+
+**Biome:**
+```typescript
+// biome-ignore lint/suspicious/noExplicitAny: <reason>
+const data: any = fetchData();
+```
+
+#### Disable a rule for a file
+
+**ESLint:**
+```typescript
+/* eslint-disable @typescript-eslint/no-explicit-any */
+```
+
+**Biome:**
+```typescript
+/* biome-ignore lint/suspicious/noExplicitAny: <reason> */
+```
+
+### Troubleshooting
+
+#### Formatting not working in VSCode
+
+1. Ensure the Biome extension is installed
+2. Check that Biome is set as the default formatter in VSCode settings
+3. Reload VSCode window: `Ctrl+Shift+P` → "Reload Window"
+
+#### ESLint errors not showing
+
+1. Ensure the ESLint extension is installed
+2. Check the ESLint output panel: `View` → `Output` → Select "ESLint"
+3. Restart ESLint server: `Ctrl+Shift+P` → "ESLint: Restart ESLint Server"
+
+#### Pre-commit hook not running
+
+1. Ensure Husky is installed: `npm install`
+2. Check that `.husky/pre-commit` file exists and is executable
+3. Verify `lint-staged` is configured in `package.json`
+
+#### Conflicts between Biome and ESLint
+
+Biome handles formatting, ESLint handles code quality. If you see conflicts:
+- Formatting issues → Use Biome (`npm run format`)
+- Code quality issues → Use ESLint (`npm run lint:fix`)
+
+### CI/CD Integration
+
+To run linting and formatting checks in your CI/CD pipeline:
+
+```bash
+# Check formatting
+npm run format:check
+
+# Run linting
+npm run lint
+
+# Or run both
+npm run check
+```
+
+If any check fails, the build should fail. This ensures code quality standards are maintained.
+
+### Migration Notes
+
+After initial setup, you may want to:
+
+1. **Format the entire codebase**: `npm run format`
+2. **Fix auto-fixable ESLint issues**: `npm run lint:fix`
+3. **Review remaining warnings**: Some rules may be set to "warn" instead of "error" for a grace period
+4. **Adjust rules as needed**: Modify `eslint.config.js` or `biome.json` to match your team's preferences
+
 ## Join the community
 
 Join our community of developers creating universal apps.

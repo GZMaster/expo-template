@@ -1,0 +1,12 @@
+node_modules
+.expo
+.expo-shared
+build/
+dist/
+coverage/
+ios/
+android/
+*.config.js
+metro.config.js
+.expo-shared/
+web-build/
