@@ -5,43 +5,46 @@
  * Navigates back to Login screen.
  */
 
-import {
-  Box,
-  Button,
-  ButtonText,
-  Input,
-  InputField,
-  Link,
-  LinkText,
-  Text,
-  VStack,
-} from '@gluestack-ui/themed';
-import { useState } from 'react';
+import { useToast } from '@/components/feedback';
+import { FormInput } from '@/components/forms';
 import { useAuthNavigation } from '@/navigation';
 import type { AuthStackScreenProps } from '@/navigation/types';
+import { type ForgotPasswordFormData, forgotPasswordSchema } from '@/schemas';
+import { Box, Button, ButtonText, Link, LinkText, Text, VStack } from '@gluestack-ui/themed';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
 
 type Props = AuthStackScreenProps<'ForgotPassword'>;
 
 export function ForgotPasswordScreen(_props: Props) {
   const navigation = useAuthNavigation();
-  const [email, setEmail] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const toast = useToast();
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState('');
 
-  async function handleResetPassword() {
-    if (!email) {
-      return;
-    }
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<ForgotPasswordFormData>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: '',
+    },
+    mode: 'onBlur',
+  });
 
+  async function onSubmit(data: ForgotPasswordFormData) {
     try {
-      setIsLoading(true);
       // TODO: Implement actual password reset API call
       await new Promise((resolve) => setTimeout(resolve, 1000)); // Simulate API call
+      setSubmittedEmail(data.email);
       setIsSubmitted(true);
+      toast.success('Password reset link sent!');
     } catch (error) {
-      console.error('Password reset failed:', error);
-    } finally {
-      setIsLoading(false);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send reset link.';
+      toast.error(errorMessage);
     }
   }
 
@@ -69,7 +72,7 @@ export function ForgotPasswordScreen(_props: Props) {
               Check Your Email
             </Text>
             <Text style={{ fontSize: 16, color: 'text-light-500', textAlign: 'center' }}>
-              We've sent a password reset link to {email}
+              We've sent a password reset link to {submittedEmail}
             </Text>
           </VStack>
 
@@ -101,26 +104,24 @@ export function ForgotPasswordScreen(_props: Props) {
         </VStack>
 
         <VStack style={{ gap: 16 }}>
-          <VStack style={{ gap: 4 }}>
-            <Text style={{ fontSize: 12, fontWeight: 'medium' }}>Email</Text>
-            <Input>
-              <InputField
-                placeholder='Enter your email'
-                value={email}
-                onChangeText={setEmail}
-                keyboardType='email-address'
-                autoCapitalize='none'
-                autoComplete='email'
-              />
-            </Input>
-          </VStack>
+          <FormInput
+            control={control}
+            name='email'
+            label='Email'
+            placeholder='Enter your email'
+            error={errors.email}
+            keyboardType='email-address'
+            autoCapitalize='none'
+            autoComplete='email'
+            required
+          />
 
           <Button
-            onPress={handleResetPassword}
-            isDisabled={isLoading || !email}
+            onPress={handleSubmit(onSubmit)}
+            isDisabled={isSubmitting}
             style={{ marginTop: 8 }}
           >
-            <ButtonText>{isLoading ? 'Sending...' : 'Send Reset Link'}</ButtonText>
+            <ButtonText>{isSubmitting ? 'Sending...' : 'Send Reset Link'}</ButtonText>
           </Button>
         </VStack>
 

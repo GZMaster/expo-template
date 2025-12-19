@@ -5,60 +5,55 @@
  * Navigates back to Login screen.
  */
 
+import { useToast } from '@/components/feedback';
+import { FormInput } from '@/components/forms';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAuthNavigation } from '@/navigation';
+import type { AuthStackScreenProps } from '@/navigation/types';
+import { type SimpleSignupFormData, simpleSignupSchema } from '@/schemas';
 import {
   Box,
   Button,
   ButtonText,
   HStack,
-  Input,
-  InputField,
   Link,
   LinkText,
   Text,
   VStack,
 } from '@gluestack-ui/themed';
-import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAuthNavigation } from '@/navigation';
-import type { AuthStackScreenProps } from '@/navigation/types';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 
 type Props = AuthStackScreenProps<'Signup'>;
 
 export function SignupScreen(_props: Props) {
   const navigation = useAuthNavigation();
   const { signup } = useAuth();
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
-  async function handleSignup() {
-    if (!email || !password) {
-      setError('Please enter both email and password');
-      return;
-    }
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<SimpleSignupFormData>({
+    resolver: zodResolver(simpleSignupSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+    mode: 'onBlur',
+  });
 
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
-
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
-
+  async function onSubmit(data: SimpleSignupFormData) {
     try {
-      setIsLoading(true);
-      setError(null);
-      await signup(email, password, name || undefined);
+      await signup(data.email, data.password, data.name || undefined);
+      toast.success('Account created successfully!');
       // Navigation will happen automatically via RootNavigator when isAuthenticated changes
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Signup failed. Please try again.');
-    } finally {
-      setIsLoading(false);
+      const errorMessage = err instanceof Error ? err.message : 'Signup failed. Please try again.';
+      toast.error(errorMessage);
     }
   }
 
@@ -74,79 +69,54 @@ export function SignupScreen(_props: Props) {
           </Text>
         </VStack>
 
-        {error && (
-          <Box bg='$error50' p='$3' borderRadius='$md'>
-            <Text color='$error600' size='sm'>
-              {error}
-            </Text>
-          </Box>
-        )}
-
         <VStack space='md'>
-          <VStack space='xs'>
-            <Text size='sm' fontWeight='$medium'>
-              Name (Optional)
-            </Text>
-            <Input>
-              <InputField
-                placeholder='Enter your name'
-                value={name}
-                onChangeText={setName}
-                autoCapitalize='words'
-              />
-            </Input>
-          </VStack>
+          <FormInput
+            control={control}
+            name='name'
+            label='Name (Optional)'
+            placeholder='Enter your name'
+            error={errors.name}
+            autoCapitalize='words'
+          />
 
-          <VStack space='xs'>
-            <Text size='sm' fontWeight='$medium'>
-              Email
-            </Text>
-            <Input>
-              <InputField
-                placeholder='Enter your email'
-                value={email}
-                onChangeText={setEmail}
-                keyboardType='email-address'
-                autoCapitalize='none'
-                autoComplete='email'
-              />
-            </Input>
-          </VStack>
+          <FormInput
+            control={control}
+            name='email'
+            label='Email'
+            placeholder='Enter your email'
+            error={errors.email}
+            keyboardType='email-address'
+            autoCapitalize='none'
+            autoComplete='email'
+            required
+          />
 
-          <VStack space='xs'>
-            <Text size='sm' fontWeight='$medium'>
-              Password
-            </Text>
-            <Input>
-              <InputField
-                placeholder='Enter your password'
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize='none'
-                autoComplete='password-new'
-              />
-            </Input>
-          </VStack>
+          <FormInput
+            control={control}
+            name='password'
+            label='Password'
+            placeholder='Enter your password'
+            error={errors.password}
+            secureTextEntry
+            autoCapitalize='none'
+            autoComplete='password-new'
+            required
+          />
 
-          <VStack space='xs'>
-            <Text size='sm' fontWeight='$medium'>
-              Confirm Password
-            </Text>
-            <Input>
-              <InputField
-                placeholder='Confirm your password'
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-                autoCapitalize='none'
-                autoComplete='password-new'
-              />
-            </Input>
-          </VStack>
+          <FormInput
+            control={control}
+            name='confirmPassword'
+            label='Confirm Password'
+            placeholder='Confirm your password'
+            error={errors.confirmPassword}
+            secureTextEntry
+            autoCapitalize='none'
+            autoComplete='password-new'
+            required
+          />
 
-          <Button onPress={handleSignup} isDisabled={isLoading} mt='$2'>
-            <ButtonText>{isLoading ? 'Creating account...' : 'Sign Up'}</ButtonText>
+          <Button onPress={handleSubmit(onSubmit)} isDisabled={isSubmitting} mt='$2'>
+            <ButtonText>{isSubmitting ? 'Creating account...' : 'Sign Up'}</ButtonText>
           </Button>
         </VStack>
 

@@ -5,48 +5,54 @@
  * Navigates to Signup or ForgotPassword screens.
  */
 
+import { useToast } from '@/components/feedback';
+import { FormInput } from '@/components/forms';
+import { useAuth } from '@/contexts/AuthContext';
+import { useAuthNavigation } from '@/navigation';
+import type { AuthStackScreenProps } from '@/navigation/types';
+import { type LoginFormData, loginSchema } from '@/schemas';
 import {
   Box,
   Button,
   ButtonText,
   HStack,
-  Input,
-  InputField,
   Link,
   LinkText,
   Text,
   VStack,
 } from '@gluestack-ui/themed';
-import { useState } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useAuthNavigation } from '@/navigation';
-import type { AuthStackScreenProps } from '@/navigation/types';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
 
 type Props = AuthStackScreenProps<'Login'>;
 
 export function LoginScreen(_props: Props) {
   const navigation = useAuthNavigation();
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const toast = useToast();
 
-  async function handleLogin() {
-    if (!email || !password) {
-      setError('Please enter both email and password');
-      return;
-    }
+  const {
+    control,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+      rememberMe: false,
+    },
+    mode: 'onBlur',
+  });
 
+  async function onSubmit(data: LoginFormData) {
     try {
-      setIsLoading(true);
-      setError(null);
-      await login(email, password);
+      await login(data.email, data.password);
+      toast.success('Login successful!');
       // Navigation will happen automatically via RootNavigator when isAuthenticated changes
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
-    } finally {
-      setIsLoading(false);
+      const errorMessage = err instanceof Error ? err.message : 'Login failed. Please try again.';
+      toast.error(errorMessage);
     }
   }
 
@@ -69,40 +75,30 @@ export function LoginScreen(_props: Props) {
           </Text>
         </VStack>
 
-        {error && (
-          <Box style={{ backgroundColor: 'error-50', padding: 12, borderRadius: 8 }}>
-            <Text style={{ fontSize: 12, color: 'error-600' }}>{error}</Text>
-          </Box>
-        )}
-
         <VStack style={{ gap: 16 }}>
-          <VStack style={{ gap: 4 }}>
-            <Text style={{ fontSize: 12, fontWeight: 'medium' }}>Email</Text>
-            <Input>
-              <InputField
-                placeholder='Enter your email'
-                value={email}
-                onChangeText={setEmail}
-                keyboardType='email-address'
-                autoCapitalize='none'
-                autoComplete='email'
-              />
-            </Input>
-          </VStack>
+          <FormInput
+            control={control}
+            name='email'
+            label='Email'
+            placeholder='Enter your email'
+            error={errors.email}
+            keyboardType='email-address'
+            autoCapitalize='none'
+            autoComplete='email'
+            required
+          />
 
-          <VStack style={{ gap: 4 }}>
-            <Text style={{ fontSize: 12, fontWeight: 'medium' }}>Password</Text>
-            <Input>
-              <InputField
-                placeholder='Enter your password'
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                autoCapitalize='none'
-                autoComplete='password'
-              />
-            </Input>
-          </VStack>
+          <FormInput
+            control={control}
+            name='password'
+            label='Password'
+            placeholder='Enter your password'
+            error={errors.password}
+            secureTextEntry
+            autoCapitalize='none'
+            autoComplete='password'
+            required
+          />
 
           <HStack justifyContent='flex-end'>
             <Link onPress={() => navigation.navigate('ForgotPassword')}>
@@ -110,8 +106,12 @@ export function LoginScreen(_props: Props) {
             </Link>
           </HStack>
 
-          <Button onPress={handleLogin} isDisabled={isLoading} style={{ marginTop: 8 }}>
-            <ButtonText>{isLoading ? 'Signing in...' : 'Sign In'}</ButtonText>
+          <Button
+            onPress={handleSubmit(onSubmit)}
+            isDisabled={isSubmitting}
+            style={{ marginTop: 8 }}
+          >
+            <ButtonText>{isSubmitting ? 'Signing in...' : 'Sign In'}</ButtonText>
           </Button>
         </VStack>
 
