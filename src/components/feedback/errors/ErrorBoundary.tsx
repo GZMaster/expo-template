@@ -5,9 +5,9 @@
  * Must be a class component as per React requirements.
  */
 
-import { logError } from '@/utils/errors';
 import type React from 'react';
 import { Component, type ReactNode } from 'react';
+import { logError } from '@/utils/errors';
 import { ErrorFallback } from './ErrorFallback';
 
 interface ErrorBoundaryProps {

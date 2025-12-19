@@ -4,9 +4,9 @@
  * ScrollView wrapper with built-in pull-to-refresh functionality.
  */
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import type { RefreshControlProps, ScrollViewProps } from 'react-native';
 import { RefreshControl, ScrollView } from 'react-native';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useRefresh } from './useRefresh';
 
 interface RefreshableScrollViewProps extends Omit<ScrollViewProps, 'refreshControl'> {

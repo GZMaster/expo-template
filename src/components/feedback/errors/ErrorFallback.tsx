@@ -4,7 +4,6 @@
  * Default error UI displayed when ErrorBoundary catches an error.
  */
 
-import { getErrorMessage, getErrorTitle } from '@/utils/errors';
 import {
   Box,
   Button,
@@ -15,6 +14,7 @@ import {
   Text,
   VStack,
 } from '@gluestack-ui/themed';
+import { getErrorMessage, getErrorTitle } from '@/utils/errors';
 
 interface ErrorFallbackProps {
   /**

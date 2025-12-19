@@ -4,9 +4,9 @@
  * FlatList wrapper with built-in pull-to-refresh functionality.
  */
 
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import type { FlatListProps, RefreshControlProps } from 'react-native';
 import { FlatList, RefreshControl } from 'react-native';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useRefresh } from './useRefresh';
 
 interface RefreshableFlatListProps<T> extends Omit<FlatListProps<T>, 'refreshControl'> {

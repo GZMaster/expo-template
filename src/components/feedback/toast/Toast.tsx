@@ -83,6 +83,12 @@ function getVariantStyles(variant: ToastVariant) {
         iconBg: '$warning600',
       };
     case 'info':
+      return {
+        bg: '$info50',
+        borderColor: '$info300',
+        icon: 'ℹ',
+        iconBg: '$info600',
+      };
     default:
       return {
         bg: '$info50',

@@ -9,6 +9,8 @@
  * - Empty states
  */
 
+import { Box, Button, ButtonText, Card, Heading, Text, VStack } from '@gluestack-ui/themed';
+import { useState } from 'react';
 import {
   EmptyList,
   EmptySearch,
@@ -23,8 +25,6 @@ import {
   SkeletonText,
   useToast,
 } from '@/components/feedback';
-import { Box, Button, ButtonText, Card, Heading, Text, VStack } from '@gluestack-ui/themed';
-import { useState } from 'react';
 
 /**
  * Feedback Examples Screen
